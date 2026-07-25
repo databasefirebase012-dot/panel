@@ -1,0 +1,6 @@
+{
+  "name": "Zephyr Panel",
+  "description": "Floating menu panel with customization, aim FOV overlay, resolution tools, and system tweaks via Shizuku.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
