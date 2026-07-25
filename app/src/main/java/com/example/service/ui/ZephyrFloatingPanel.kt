@@ -494,85 +494,69 @@ private fun MainFeaturesSection(
         HorizontalDivider(color = themeConfig.primaryColor.copy(alpha = 0.2f))
 
         // 3. AIM RESOLUTION & DENSITY
-        SectionTitle("3. Aim Resolution & Density", themeConfig)
-        Text("Landscape / Fullscreen Resolution Presets:", color = themeConfig.highlightColor, fontSize = 11.sp)
+        SectionTitle("3. Aim Resolution & DPI", themeConfig)
+        Text("Pilihan Trick Resolusi:", color = themeConfig.highlightColor, fontSize = 11.sp)
         Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Button(
                 onClick = {
-                    runSilentCommand("wm size 1920x1080")
-                    triggerFailsafe()
+                    coroutineScope.launch {
+                        ShizukuCommandRunner.executeCommandsSilent(
+                            listOf("wm size 2408x900", "wm density 100")
+                        )
+                        triggerFailsafe()
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = themeConfig.cardBgColor),
                 modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(4.dp)
+                contentPadding = PaddingValues(6.dp)
             ) {
-                Text("PC 16:9", color = themeConfig.primaryColor, fontSize = 11.sp)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("AIM TRICK V1", color = themeConfig.primaryColor, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("2408x900 (DPI 100)", color = themeConfig.highlightColor.copy(alpha = 0.7f), fontSize = 9.sp)
+                }
             }
+
             Button(
                 onClick = {
-                    runSilentCommand("wm size 2560x1080")
-                    triggerFailsafe()
+                    coroutineScope.launch {
+                        ShizukuCommandRunner.executeCommandsSilent(
+                            listOf("wm size 2000x5000")
+                        )
+                        triggerFailsafe()
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = themeConfig.cardBgColor),
                 modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(4.dp)
+                contentPadding = PaddingValues(6.dp)
             ) {
-                Text("PC 21:9", color = themeConfig.primaryColor, fontSize = 11.sp)
-            }
-            Button(
-                onClick = {
-                    runSilentCommand("wm size 1440x1080")
-                    triggerFailsafe()
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = themeConfig.cardBgColor),
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(4.dp)
-            ) {
-                Text("Stretch 4:3", color = themeConfig.primaryColor, fontSize = 11.sp)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("AIM TRICK V2", color = themeConfig.primaryColor, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("2000x5000 (Default DPI)", color = themeConfig.highlightColor.copy(alpha = 0.7f), fontSize = 9.sp)
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(2.dp))
-        Text("DPI / Screen Density (Lower = Wider View):", color = themeConfig.highlightColor, fontSize = 11.sp)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text("Pilihan DPI / Lebar Terkecil:", color = themeConfig.highlightColor, fontSize = 11.sp)
         Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Button(
-                onClick = {
-                    runSilentCommand("wm density 320")
-                    triggerFailsafe()
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = themeConfig.cardBgColor),
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(4.dp)
-            ) {
-                Text("320 Wide", color = themeConfig.primaryColor, fontSize = 11.sp)
-            }
-            Button(
-                onClick = {
-                    runSilentCommand("wm density 380")
-                    triggerFailsafe()
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = themeConfig.cardBgColor),
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(4.dp)
-            ) {
-                Text("380 Mid", color = themeConfig.primaryColor, fontSize = 11.sp)
-            }
-            Button(
-                onClick = {
-                    runSilentCommand("wm density 480")
-                    triggerFailsafe()
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = themeConfig.cardBgColor),
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(4.dp)
-            ) {
-                Text("480 Close", color = themeConfig.primaryColor, fontSize = 11.sp)
+            listOf("380", "480", "580", "680", "780").forEach { dpi ->
+                Button(
+                    onClick = {
+                        runSilentCommand("wm density $dpi")
+                        triggerFailsafe()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = themeConfig.cardBgColor),
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 4.dp)
+                ) {
+                    Text(dpi, color = themeConfig.primaryColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
             }
         }
 
@@ -587,13 +571,13 @@ private fun MainFeaturesSection(
             modifier = Modifier.fillMaxWidth(),
             contentPadding = PaddingValues(4.dp)
         ) {
-            Text("Reset Resolution & Density", color = themeConfig.highlightColor, fontSize = 11.sp)
+            Text("Reset Resolusi & DPI", color = themeConfig.highlightColor, fontSize = 11.sp)
         }
 
         HorizontalDivider(color = themeConfig.primaryColor.copy(alpha = 0.2f))
 
         // 4. BOOST RAM & DELETE CACHE
-        SectionTitle("4. Boost RAM & Clear Cache", themeConfig)
+        SectionTitle("4. Boost RAM & Hapus Cache Data", themeConfig)
         Button(
             onClick = {
                 coroutineScope.launch {
@@ -606,7 +590,7 @@ private fun MainFeaturesSection(
                             "am kill-all"
                         )
                     )
-                    Toast.makeText(context, "RAM Cleaned & Cache Cleared for $selectedGame!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Pembersihan Cache & RAM $selectedGame Berhasil!", Toast.LENGTH_SHORT).show()
                 }
             },
             colors = ButtonDefaults.buttonColors(containerColor = themeConfig.primaryColor),
@@ -614,13 +598,13 @@ private fun MainFeaturesSection(
         ) {
             Icon(imageVector = Icons.Default.Speed, contentDescription = null, tint = Color.Black)
             Spacer(modifier = Modifier.width(6.dp))
-            Text("Clean RAM & Data Cache", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            Text("Bersihkan Cache Data & RAM", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
         }
 
         HorizontalDivider(color = themeConfig.primaryColor.copy(alpha = 0.2f))
 
         // 5. AIM LEGIT & TOUCH SENSITIVITY
-        SectionTitle("5. Aim Legit (Touch Responsiveness)", themeConfig)
+        SectionTitle("5. Aim Legit (Touch Smooth & Drag)", themeConfig)
 
         Text(
             "Pointer Speed: ${pointerSpeedVal.toInt()}",
@@ -651,14 +635,16 @@ private fun MainFeaturesSection(
                             "settings put system pointer_speed 7",
                             "settings put secure speed 7",
                             "settings put system touch_prediction_enabled 1",
-                            "settings put system view_configuration_touch_slop 4",
-                            "settings put secure long_press_timeout 200",
+                            "settings put system view_configuration_touch_slop 1",
+                            "settings put secure long_press_timeout 100",
                             "settings put global window_animation_scale 0.5",
                             "settings put global transition_animation_scale 0.5",
-                            "settings put global animator_duration_scale 0.5"
+                            "settings put global animator_duration_scale 0.5",
+                            "settings put system multi_touch_enable 1",
+                            "settings put system touch_response_speed 1"
                         )
                     )
-                    Toast.makeText(context, "Ultra Touch Response Enabled!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Preset Aim Legit Max Aktif!", Toast.LENGTH_SHORT).show()
                 }
             },
             colors = ButtonDefaults.buttonColors(containerColor = themeConfig.primaryColor),
@@ -666,7 +652,7 @@ private fun MainFeaturesSection(
         ) {
             Icon(imageVector = Icons.Default.Bolt, contentDescription = null, tint = Color.Black)
             Spacer(modifier = Modifier.width(6.dp))
-            Text("Ultra Smooth Touch Preset", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+            Text("Preset Aim Legit Super Licin", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
         }
 
         Row(
@@ -675,14 +661,24 @@ private fun MainFeaturesSection(
         ) {
             Button(
                 onClick = {
-                    runSilentCommand("settings put system view_configuration_touch_slop 4")
-                    Toast.makeText(context, "Fast Drag Response Active!", Toast.LENGTH_SHORT).show()
+                    coroutineScope.launch {
+                        pointerSpeedVal = 4f
+                        ShizukuCommandRunner.executeCommandsSilent(
+                            listOf(
+                                "settings put system pointer_speed 4",
+                                "settings put secure speed 4",
+                                "settings put system view_configuration_touch_slop 3",
+                                "settings put system touch_prediction_enabled 1"
+                            )
+                        )
+                        Toast.makeText(context, "Aim Legit Mid Aktif!", Toast.LENGTH_SHORT).show()
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = themeConfig.cardBgColor),
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(2.dp)
             ) {
-                Text("Low Slop Drag", color = themeConfig.primaryColor, fontSize = 10.sp)
+                Text("Legit Mid", color = themeConfig.primaryColor, fontSize = 11.sp)
             }
 
             Button(
@@ -701,14 +697,14 @@ private fun MainFeaturesSection(
                                 "settings put global animator_duration_scale 1.0"
                             )
                         )
-                        Toast.makeText(context, "Touch Settings Reset!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Sensitivitas Reset!", Toast.LENGTH_SHORT).show()
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = themeConfig.cardBgColor),
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(2.dp)
             ) {
-                Text("Reset Touch", color = themeConfig.highlightColor, fontSize = 10.sp)
+                Text("Reset Touch", color = themeConfig.highlightColor, fontSize = 11.sp)
             }
         }
     }

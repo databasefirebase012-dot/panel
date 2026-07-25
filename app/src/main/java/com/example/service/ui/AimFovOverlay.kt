@@ -18,23 +18,23 @@ fun AimFovOverlay() {
     val fovOffsetX by ThemePreferences.fovOffsetXFlow.collectAsState()
     val fovOffsetY by ThemePreferences.fovOffsetYFlow.collectAsState()
 
-    if (!fovEnabled) return
-
     Canvas(modifier = Modifier.fillMaxSize()) {
-        val centerPoint = Offset(center.x + fovOffsetX, center.y + fovOffsetY)
-        // Draw crosshair overlay circle
-        drawCircle(
-            color = fovColor,
-            radius = fovRadius,
-            center = centerPoint,
-            style = Stroke(width = 3f)
-        )
-        // Center dot
-        drawCircle(
-            color = fovColor,
-            radius = 4f,
-            center = centerPoint
-        )
+        if (fovEnabled) {
+            val centerPoint = Offset(center.x + fovOffsetX, center.y + fovOffsetY)
+            // Draw crosshair overlay circle
+            drawCircle(
+                color = fovColor,
+                radius = fovRadius,
+                center = centerPoint,
+                style = Stroke(width = 3f)
+            )
+            // Center dot
+            drawCircle(
+                color = fovColor,
+                radius = 4f,
+                center = centerPoint
+            )
+        }
     }
 }
 
