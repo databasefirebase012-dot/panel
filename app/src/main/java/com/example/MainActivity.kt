@@ -85,11 +85,15 @@ class MainActivity : ComponentActivity() {
                     onStartFloatingPanel = {
                         FloatingPanelService.startService(applicationContext)
                         moveTaskToBack(true)
+                    },
+                    onStopFloatingPanel = {
+                        FloatingPanelService.stopService(applicationContext)
                     }
                 )
             }
         }
     }
+
 
     override fun onDestroy() {
         try {
@@ -109,15 +113,18 @@ class MainActivity : ComponentActivity() {
 fun MainScreen(
     onRequestOverlayPermission: () -> Unit,
     onRequestShizukuPermission: () -> Unit,
-    onStartFloatingPanel: () -> Unit
+    onStartFloatingPanel: () -> Unit,
+    onStopFloatingPanel: () -> Unit
 ) {
     val context = LocalContext.current
     val themeConfig by ThemePreferences.themeFlow.collectAsState()
     val selectedGame by ThemePreferences.selectedGameFlow.collectAsState()
+    val isServiceRunning by FloatingPanelService.isRunningFlow.collectAsState()
 
     var hasOverlayPermission by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
     var isShizukuAvailable by remember { mutableStateOf(ShizukuCommandRunner.isShizukuAvailable()) }
     var hasShizukuPermission by remember { mutableStateOf(ShizukuCommandRunner.hasPermission()) }
+
 
     // Periodic check for permission status updates
     LaunchedEffect(Unit) {
@@ -288,23 +295,29 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // START BUTTON
+            // START / STOP BUTTON
             val canStart = hasOverlayPermission && hasShizukuPermission
             Button(
                 onClick = {
-                    if (canStart) {
-                        onStartFloatingPanel()
+                    if (isServiceRunning) {
+                        onStopFloatingPanel()
                     } else {
-                        Toast.makeText(
-                            context,
-                            "Please grant all permissions first!",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        if (canStart) {
+                            onStartFloatingPanel()
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "Please grant all permissions first!",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                 },
                 enabled = true,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (canStart) themeConfig.primaryColor else themeConfig.primaryColor.copy(alpha = 0.4f)
+                    containerColor = if (isServiceRunning) Color(0xFFFF0055)
+                    else if (canStart) themeConfig.primaryColor
+                    else themeConfig.primaryColor.copy(alpha = 0.4f)
                 ),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
@@ -312,19 +325,20 @@ fun MainScreen(
                     .height(52.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.PlayArrow,
+                    imageVector = if (isServiceRunning) Icons.Default.Stop else Icons.Default.PlayArrow,
                     contentDescription = null,
-                    tint = Color.Black,
+                    tint = if (isServiceRunning) Color.White else Color.Black,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "START ZEPHYR PANEL",
-                    color = Color.Black,
+                    text = if (isServiceRunning) "STOP ZEPHYR PANEL" else "START ZEPHYR PANEL",
+                    color = if (isServiceRunning) Color.White else Color.Black,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 16.sp
                 )
             }
+
 
             Spacer(modifier = Modifier.weight(1f))
 

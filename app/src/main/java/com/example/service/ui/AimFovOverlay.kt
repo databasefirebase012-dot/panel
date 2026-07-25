@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Stroke
 import com.example.data.ThemePreferences
 
@@ -14,11 +15,13 @@ fun AimFovOverlay() {
     val fovEnabled by ThemePreferences.fovEnabledFlow.collectAsState()
     val fovRadius by ThemePreferences.fovRadiusFlow.collectAsState()
     val fovColor by ThemePreferences.fovColorFlow.collectAsState()
+    val fovOffsetX by ThemePreferences.fovOffsetXFlow.collectAsState()
+    val fovOffsetY by ThemePreferences.fovOffsetYFlow.collectAsState()
 
     if (!fovEnabled) return
 
     Canvas(modifier = Modifier.fillMaxSize()) {
-        val centerPoint = center
+        val centerPoint = Offset(center.x + fovOffsetX, center.y + fovOffsetY)
         // Draw crosshair overlay circle
         drawCircle(
             color = fovColor,
@@ -34,3 +37,4 @@ fun AimFovOverlay() {
         )
     }
 }
+

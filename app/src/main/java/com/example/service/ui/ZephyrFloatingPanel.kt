@@ -1,6 +1,7 @@
 package com.example.service.ui
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -298,17 +299,27 @@ private fun MainFeaturesSection(
     val fovEnabled by ThemePreferences.fovEnabledFlow.collectAsState()
     val fovRadius by ThemePreferences.fovRadiusFlow.collectAsState()
     val fovColor by ThemePreferences.fovColorFlow.collectAsState()
+    val fovOffsetX by ThemePreferences.fovOffsetXFlow.collectAsState()
+    val fovOffsetY by ThemePreferences.fovOffsetYFlow.collectAsState()
+
+    var pointerSpeedVal by remember { mutableFloatStateOf(7f) }
+    var moveStepPx by remember { mutableFloatStateOf(5f) }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
-        // 1. AIM FOV
-        SectionTitle("1. Aim FOV", themeConfig)
+        // 1. AIM FOV & POSITION ALIGNMENT
+        SectionTitle("1. Aim FOV & Crosshair Alignment", themeConfig)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Enable Overlay Circle", color = themeConfig.highlightColor, fontSize = 13.sp, modifier = Modifier.weight(1f))
+            Text(
+                "Enable Circle Overlay",
+                color = themeConfig.highlightColor,
+                fontSize = 13.sp,
+                modifier = Modifier.weight(1f)
+            )
             Switch(
                 checked = fovEnabled,
                 onCheckedChange = {
-                    ThemePreferences.saveFovConfig(context, it, fovRadius, fovColor)
+                    ThemePreferences.setFovEnabled(context, it)
                 },
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = themeConfig.primaryColor,
@@ -338,8 +349,8 @@ private fun MainFeaturesSection(
             ) {
                 Text("Color:", color = themeConfig.highlightColor, fontSize = 12.sp)
                 val colorList = listOf(
-                    Color(0xFF39FF14), // Green Light
-                    Color(0xFFFF0055), // Neon Red
+                    Color(0xFF39FF14), // Green
+                    Color(0xFFFF0055), // Red
                     Color(0xFF00E5FF), // Cyan
                     Color(0xFFFFFF00), // Yellow
                     Color(0xFFFFFFFF)  // White
@@ -361,13 +372,97 @@ private fun MainFeaturesSection(
                     )
                 }
             }
+
+            // Crosshair Directional Adjustment Arrows
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(themeConfig.cardBgColor, RoundedCornerShape(8.dp))
+                    .padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Adjust Position Offset (X: ${fovOffsetX.toInt()}, Y: ${fovOffsetY.toInt()})",
+                    color = themeConfig.primaryColor,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Step speed selection
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Step:", color = themeConfig.highlightColor, fontSize = 10.sp)
+                    listOf(1f to "1px", 5f to "5px", 15f to "15px").forEach { (step, label) ->
+                        OutlinedButton(
+                            onClick = { moveStepPx = step },
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (moveStepPx == step) themeConfig.primaryColor.copy(alpha = 0.3f) else Color.Transparent
+                            ),
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+                            modifier = Modifier.height(26.dp)
+                        ) {
+                            Text(label, color = themeConfig.highlightColor, fontSize = 10.sp)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Arrow D-Pad Layout
+                // Top Row: Up
+                IconButton(
+                    onClick = { ThemePreferences.adjustFovOffset(context, 0f, -moveStepPx) },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Up", tint = themeConfig.primaryColor)
+                }
+
+                // Middle Row: Left, Reset, Right
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = { ThemePreferences.adjustFovOffset(context, -moveStepPx, 0f) },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Left", tint = themeConfig.primaryColor)
+                    }
+
+                    OutlinedButton(
+                        onClick = { ThemePreferences.resetFovOffset(context) },
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                        modifier = Modifier.height(28.dp)
+                    ) {
+                        Text("Reset", color = themeConfig.highlightColor, fontSize = 10.sp)
+                    }
+
+                    IconButton(
+                        onClick = { ThemePreferences.adjustFovOffset(context, moveStepPx, 0f) },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Right", tint = themeConfig.primaryColor)
+                    }
+                }
+
+                // Bottom Row: Down
+                IconButton(
+                    onClick = { ThemePreferences.adjustFovOffset(context, 0f, moveStepPx) },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Down", tint = themeConfig.primaryColor)
+                }
+            }
         }
 
         HorizontalDivider(color = themeConfig.primaryColor.copy(alpha = 0.2f))
 
         // 2. DOWNSCALE
         SectionTitle("2. Downscale (Game Overlay)", themeConfig)
-        Text("Game: $selectedGame", color = themeConfig.highlightColor.copy(alpha = 0.7f), fontSize = 11.sp)
+        Text("Active Game: $selectedGame", color = themeConfig.highlightColor.copy(alpha = 0.7f), fontSize = 11.sp)
         Row(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.fillMaxWidth()
@@ -398,39 +493,76 @@ private fun MainFeaturesSection(
 
         HorizontalDivider(color = themeConfig.primaryColor.copy(alpha = 0.2f))
 
-        // 3. AIM RESOLUTION
-        SectionTitle("3. Aim Resolution (WM Size & Density)", themeConfig)
+        // 3. AIM RESOLUTION & DENSITY
+        SectionTitle("3. Aim Resolution & Density", themeConfig)
+        Text("Landscape / Fullscreen Resolution Presets:", color = themeConfig.highlightColor, fontSize = 11.sp)
         Row(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Button(
                 onClick = {
-                    runSilentCommand("wm size 1280x720")
+                    runSilentCommand("wm size 1920x1080")
                     triggerFailsafe()
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = themeConfig.cardBgColor),
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(4.dp)
             ) {
-                Text("PC Ratio", color = themeConfig.primaryColor, fontSize = 11.sp)
+                Text("PC 16:9", color = themeConfig.primaryColor, fontSize = 11.sp)
             }
             Button(
                 onClick = {
-                    runSilentCommand("wm size 1080x1080")
+                    runSilentCommand("wm size 2560x1080")
                     triggerFailsafe()
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = themeConfig.cardBgColor),
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(4.dp)
             ) {
-                Text("Stretch", color = themeConfig.primaryColor, fontSize = 11.sp)
+                Text("PC 21:9", color = themeConfig.primaryColor, fontSize = 11.sp)
+            }
+            Button(
+                onClick = {
+                    runSilentCommand("wm size 1440x1080")
+                    triggerFailsafe()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = themeConfig.cardBgColor),
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(4.dp)
+            ) {
+                Text("Stretch 4:3", color = themeConfig.primaryColor, fontSize = 11.sp)
             }
         }
+
+        Spacer(modifier = Modifier.height(2.dp))
+        Text("DPI / Screen Density (Lower = Wider View):", color = themeConfig.highlightColor, fontSize = 11.sp)
         Row(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
+            Button(
+                onClick = {
+                    runSilentCommand("wm density 320")
+                    triggerFailsafe()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = themeConfig.cardBgColor),
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(4.dp)
+            ) {
+                Text("320 Wide", color = themeConfig.primaryColor, fontSize = 11.sp)
+            }
+            Button(
+                onClick = {
+                    runSilentCommand("wm density 380")
+                    triggerFailsafe()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = themeConfig.cardBgColor),
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(4.dp)
+            ) {
+                Text("380 Mid", color = themeConfig.primaryColor, fontSize = 11.sp)
+            }
             Button(
                 onClick = {
                     runSilentCommand("wm density 480")
@@ -440,37 +572,41 @@ private fun MainFeaturesSection(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(4.dp)
             ) {
-                Text("High DPI", color = themeConfig.primaryColor, fontSize = 11.sp)
+                Text("480 Close", color = themeConfig.primaryColor, fontSize = 11.sp)
             }
-            Button(
-                onClick = {
-                    coroutineScope.launch {
-                        ShizukuCommandRunner.executeCommandsSilent(
-                            listOf("wm size reset", "wm density reset")
-                        )
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = themeConfig.cardBgColor),
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(4.dp)
-            ) {
-                Text("Reset WM", color = themeConfig.highlightColor, fontSize = 11.sp)
-            }
+        }
+
+        OutlinedButton(
+            onClick = {
+                coroutineScope.launch {
+                    ShizukuCommandRunner.executeCommandsSilent(
+                        listOf("wm size reset", "wm density reset")
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(4.dp)
+        ) {
+            Text("Reset Resolution & Density", color = themeConfig.highlightColor, fontSize = 11.sp)
         }
 
         HorizontalDivider(color = themeConfig.primaryColor.copy(alpha = 0.2f))
 
-        // 4. BOOST RAM
-        SectionTitle("4. Boost RAM", themeConfig)
+        // 4. BOOST RAM & DELETE CACHE
+        SectionTitle("4. Boost RAM & Clear Cache", themeConfig)
         Button(
             onClick = {
                 coroutineScope.launch {
                     ShizukuCommandRunner.executeCommandsSilent(
                         listOf(
-                            "am kill-all",
-                            "pm trim-caches 999999999"
+                            "rm -rf /storage/emulated/0/Android/data/$selectedGame/cache/*",
+                            "rm -rf /storage/emulated/0/Android/data/$selectedGame/files/reportcache/*",
+                            "rm -rf /data/data/$selectedGame/cache/*",
+                            "pm trim-caches 999999999",
+                            "am kill-all"
                         )
                     )
+                    Toast.makeText(context, "RAM Cleaned & Cache Cleared for $selectedGame!", Toast.LENGTH_SHORT).show()
                 }
             },
             colors = ButtonDefaults.buttonColors(containerColor = themeConfig.primaryColor),
@@ -478,38 +614,106 @@ private fun MainFeaturesSection(
         ) {
             Icon(imageVector = Icons.Default.Speed, contentDescription = null, tint = Color.Black)
             Spacer(modifier = Modifier.width(6.dp))
-            Text("Clean RAM & Cache", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            Text("Clean RAM & Data Cache", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
         }
 
         HorizontalDivider(color = themeConfig.primaryColor.copy(alpha = 0.2f))
 
-        // 5. AIM LEGIT
+        // 5. AIM LEGIT & TOUCH SENSITIVITY
         SectionTitle("5. Aim Legit (Touch Responsiveness)", themeConfig)
+
+        Text(
+            "Pointer Speed: ${pointerSpeedVal.toInt()}",
+            color = themeConfig.highlightColor,
+            fontSize = 11.sp
+        )
+        Slider(
+            value = pointerSpeedVal,
+            onValueChange = {
+                pointerSpeedVal = it
+                runSilentCommand("settings put system pointer_speed ${it.toInt()}")
+                runSilentCommand("settings put secure speed ${it.toInt()}")
+            },
+            valueRange = -7f..7f,
+            steps = 13,
+            colors = SliderDefaults.colors(
+                thumbColor = themeConfig.primaryColor,
+                activeTrackColor = themeConfig.primaryColor
+            )
+        )
+
+        Button(
+            onClick = {
+                coroutineScope.launch {
+                    pointerSpeedVal = 7f
+                    ShizukuCommandRunner.executeCommandsSilent(
+                        listOf(
+                            "settings put system pointer_speed 7",
+                            "settings put secure speed 7",
+                            "settings put system touch_prediction_enabled 1",
+                            "settings put system view_configuration_touch_slop 4",
+                            "settings put secure long_press_timeout 200",
+                            "settings put global window_animation_scale 0.5",
+                            "settings put global transition_animation_scale 0.5",
+                            "settings put global animator_duration_scale 0.5"
+                        )
+                    )
+                    Toast.makeText(context, "Ultra Touch Response Enabled!", Toast.LENGTH_SHORT).show()
+                }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = themeConfig.primaryColor),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(imageVector = Icons.Default.Bolt, contentDescription = null, tint = Color.Black)
+            Spacer(modifier = Modifier.width(6.dp))
+            Text("Ultra Smooth Touch Preset", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+        }
+
         Row(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Button(
                 onClick = {
-                    runSilentCommand("settings put system pointer_speed 7")
+                    runSilentCommand("settings put system view_configuration_touch_slop 4")
+                    Toast.makeText(context, "Fast Drag Response Active!", Toast.LENGTH_SHORT).show()
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = themeConfig.cardBgColor),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(2.dp)
             ) {
-                Text("Boost Pointer", color = themeConfig.primaryColor, fontSize = 11.sp)
+                Text("Low Slop Drag", color = themeConfig.primaryColor, fontSize = 10.sp)
             }
+
             Button(
                 onClick = {
-                    runSilentCommand("settings put system pointer_speed 0")
+                    coroutineScope.launch {
+                        pointerSpeedVal = 0f
+                        ShizukuCommandRunner.executeCommandsSilent(
+                            listOf(
+                                "settings put system pointer_speed 0",
+                                "settings put secure speed 0",
+                                "settings put system touch_prediction_enabled 0",
+                                "settings put system view_configuration_touch_slop 8",
+                                "settings put secure long_press_timeout 400",
+                                "settings put global window_animation_scale 1.0",
+                                "settings put global transition_animation_scale 1.0",
+                                "settings put global animator_duration_scale 1.0"
+                            )
+                        )
+                        Toast.makeText(context, "Touch Settings Reset!", Toast.LENGTH_SHORT).show()
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = themeConfig.cardBgColor),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(2.dp)
             ) {
-                Text("Reset Pointer", color = themeConfig.highlightColor, fontSize = 11.sp)
+                Text("Reset Touch", color = themeConfig.highlightColor, fontSize = 10.sp)
             }
         }
     }
 }
+
 
 @Composable
 private fun SettingsThemeSection(

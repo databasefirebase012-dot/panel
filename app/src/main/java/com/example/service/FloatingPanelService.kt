@@ -24,6 +24,9 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.example.service.ui.AimFovOverlay
 import com.example.service.ui.ZephyrFloatingPanel
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+
 class FloatingPanelService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStateRegistryOwner {
 
     private lateinit var windowManager: WindowManager
@@ -40,6 +43,7 @@ class FloatingPanelService : Service(), LifecycleOwner, ViewModelStoreOwner, Sav
 
     override fun onCreate() {
         super.onCreate()
+        _isRunningFlow.value = true
         savedStateRegistryController.performRestore(null)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
 
@@ -51,6 +55,7 @@ class FloatingPanelService : Service(), LifecycleOwner, ViewModelStoreOwner, Sav
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
     }
+
 
     private fun showFovOverlay() {
         if (fovComposeView != null) return
@@ -137,6 +142,7 @@ class FloatingPanelService : Service(), LifecycleOwner, ViewModelStoreOwner, Sav
     }
 
     override fun onDestroy() {
+        _isRunningFlow.value = false
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
@@ -153,6 +159,9 @@ class FloatingPanelService : Service(), LifecycleOwner, ViewModelStoreOwner, Sav
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
+        private val _isRunningFlow = MutableStateFlow(false)
+        val isRunningFlow: StateFlow<Boolean> = _isRunningFlow
+
         fun startService(context: Context) {
             val intent = Intent(context, FloatingPanelService::class.java)
             context.startService(intent)
@@ -164,3 +173,4 @@ class FloatingPanelService : Service(), LifecycleOwner, ViewModelStoreOwner, Sav
         }
     }
 }
+

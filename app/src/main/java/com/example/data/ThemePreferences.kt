@@ -24,6 +24,8 @@ object ThemePreferences {
     private const val KEY_FOV_RADIUS = "fov_radius"
     private const val KEY_FOV_COLOR = "fov_color"
     private const val KEY_FOV_ENABLED = "fov_enabled"
+    private const val KEY_FOV_OFFSET_X = "fov_offset_x"
+    private const val KEY_FOV_OFFSET_Y = "fov_offset_y"
 
     const val GAME_FREE_FIRE_ORI = "com.dts.freefireth"
     const val GAME_FREE_FIRE_MAX = "com.dts.freefiremax"
@@ -43,6 +45,12 @@ object ThemePreferences {
     private val _fovEnabledFlow = MutableStateFlow(false)
     val fovEnabledFlow: StateFlow<Boolean> = _fovEnabledFlow
 
+    private val _fovOffsetXFlow = MutableStateFlow(0f)
+    val fovOffsetXFlow: StateFlow<Float> = _fovOffsetXFlow
+
+    private val _fovOffsetYFlow = MutableStateFlow(0f)
+    val fovOffsetYFlow: StateFlow<Float> = _fovOffsetYFlow
+
     fun init(context: Context) {
         val prefs = getPrefs(context)
         val primary = prefs.getInt(KEY_PRIMARY_COLOR, 0xFF39FF14.toInt())
@@ -52,6 +60,8 @@ object ThemePreferences {
         val fovRadius = prefs.getFloat(KEY_FOV_RADIUS, 100f)
         val fovColor = prefs.getInt(KEY_FOV_COLOR, 0xFF39FF14.toInt())
         val fovEnabled = prefs.getBoolean(KEY_FOV_ENABLED, false)
+        val fovOffsetX = prefs.getFloat(KEY_FOV_OFFSET_X, 0f)
+        val fovOffsetY = prefs.getFloat(KEY_FOV_OFFSET_Y, 0f)
 
         _themeFlow.value = ZephyrThemeConfig(
             primaryColor = Color(primary),
@@ -62,6 +72,8 @@ object ThemePreferences {
         _fovRadiusFlow.value = fovRadius
         _fovColorFlow.value = Color(fovColor)
         _fovEnabledFlow.value = fovEnabled
+        _fovOffsetXFlow.value = fovOffsetX
+        _fovOffsetYFlow.value = fovOffsetY
     }
 
     private fun getPrefs(context: Context): SharedPreferences {
@@ -97,5 +109,32 @@ object ThemePreferences {
         _fovEnabledFlow.value = enabled
         _fovRadiusFlow.value = radius
         _fovColorFlow.value = color
+    }
+
+    fun setFovEnabled(context: Context, enabled: Boolean) {
+        getPrefs(context).edit().putBoolean(KEY_FOV_ENABLED, enabled).apply()
+        _fovEnabledFlow.value = enabled
+    }
+
+    fun adjustFovOffset(context: Context, deltaX: Float, deltaY: Float) {
+        val newX = _fovOffsetXFlow.value + deltaX
+        val newY = _fovOffsetYFlow.value + deltaY
+        getPrefs(context).edit().apply {
+            putFloat(KEY_FOV_OFFSET_X, newX)
+            putFloat(KEY_FOV_OFFSET_Y, newY)
+            apply()
+        }
+        _fovOffsetXFlow.value = newX
+        _fovOffsetYFlow.value = newY
+    }
+
+    fun resetFovOffset(context: Context) {
+        getPrefs(context).edit().apply {
+            putFloat(KEY_FOV_OFFSET_X, 0f)
+            putFloat(KEY_FOV_OFFSET_Y, 0f)
+            apply()
+        }
+        _fovOffsetXFlow.value = 0f
+        _fovOffsetYFlow.value = 0f
     }
 }
