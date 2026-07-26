@@ -461,29 +461,46 @@ private fun MainFeaturesSection(
         HorizontalDivider(color = themeConfig.primaryColor.copy(alpha = 0.2f))
 
         // 2. DOWNSCALE
-        SectionTitle("2. Downscale (Game Overlay)", themeConfig)
-        Text("Active Game: $selectedGame", color = themeConfig.highlightColor.copy(alpha = 0.7f), fontSize = 11.sp)
+        SectionTitle("2. Downscale Game Overlay", themeConfig)
+        Text("Target Game: $selectedGame", color = themeConfig.highlightColor.copy(alpha = 0.7f), fontSize = 11.sp)
         Row(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            listOf("90%" to "0.9", "80%" to "0.8", "70%" to "0.7").forEach { (label, factor) ->
+            listOf("90%" to "0.9", "80%" to "0.8", "70%" to "0.7", "60%" to "0.6").forEach { (label, factor) ->
                 OutlinedButton(
                     onClick = {
-                        val cmd = "device_config put game_overlay $selectedGame mode=2,downscaleFactor=$factor"
-                        runSilentCommand(cmd)
+                        coroutineScope.launch {
+                            ShizukuCommandRunner.executeCommandsSilent(
+                                listOf(
+                                    "cmd game mode custom --downscale $factor $selectedGame",
+                                    "device_config put game_overlay $selectedGame mode=2,downscaleFactor=$factor",
+                                    "cmd game mode 2 $selectedGame"
+                                )
+                            )
+                            Toast.makeText(context, "Downscale $label Aktif!", Toast.LENGTH_SHORT).show()
+                        }
                     },
+                    colors = ButtonDefaults.outlinedButtonColors(containerColor = themeConfig.cardBgColor),
                     modifier = Modifier.weight(1f),
                     contentPadding = PaddingValues(2.dp)
                 ) {
-                    Text(label, color = themeConfig.primaryColor, fontSize = 11.sp)
+                    Text(label, color = themeConfig.primaryColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
         OutlinedButton(
             onClick = {
-                val cmd = "device_config delete game_overlay $selectedGame"
-                runSilentCommand(cmd)
+                coroutineScope.launch {
+                    ShizukuCommandRunner.executeCommandsSilent(
+                        listOf(
+                            "cmd game mode standard $selectedGame",
+                            "device_config delete game_overlay $selectedGame",
+                            "cmd game mode reset $selectedGame"
+                        )
+                    )
+                    Toast.makeText(context, "Downscale Reset!", Toast.LENGTH_SHORT).show()
+                }
             },
             modifier = Modifier.fillMaxWidth(),
             contentPadding = PaddingValues(4.dp)
@@ -493,8 +510,8 @@ private fun MainFeaturesSection(
 
         HorizontalDivider(color = themeConfig.primaryColor.copy(alpha = 0.2f))
 
-        // 3. AIM RESOLUTION & DENSITY
-        SectionTitle("3. Aim Resolution & DPI", themeConfig)
+        // 3. AIM RESOLUTION
+        SectionTitle("3. Aim Resolution", themeConfig)
         Text("Pilihan Trick Resolusi:", color = themeConfig.highlightColor, fontSize = 11.sp)
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -504,7 +521,7 @@ private fun MainFeaturesSection(
                 onClick = {
                     coroutineScope.launch {
                         ShizukuCommandRunner.executeCommandsSilent(
-                            listOf("wm size 2408x900", "wm density 100")
+                            listOf("wm size 2000x5000", "wm density reset")
                         )
                         triggerFailsafe()
                     }
@@ -515,7 +532,7 @@ private fun MainFeaturesSection(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("AIM TRICK V1", color = themeConfig.primaryColor, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                    Text("2408x900 (DPI 100)", color = themeConfig.highlightColor.copy(alpha = 0.7f), fontSize = 9.sp)
+                    Text("2000x5000 (Default DPI)", color = themeConfig.highlightColor.copy(alpha = 0.7f), fontSize = 9.sp)
                 }
             }
 
@@ -523,7 +540,7 @@ private fun MainFeaturesSection(
                 onClick = {
                     coroutineScope.launch {
                         ShizukuCommandRunner.executeCommandsSilent(
-                            listOf("wm size 2000x5000")
+                            listOf("wm size 2000x5000", "wm density 400")
                         )
                         triggerFailsafe()
                     }
@@ -534,28 +551,7 @@ private fun MainFeaturesSection(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("AIM TRICK V2", color = themeConfig.primaryColor, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                    Text("2000x5000 (Default DPI)", color = themeConfig.highlightColor.copy(alpha = 0.7f), fontSize = 9.sp)
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(4.dp))
-        Text("Pilihan DPI / Lebar Terkecil:", color = themeConfig.highlightColor, fontSize = 11.sp)
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            listOf("380", "480", "580", "680", "780").forEach { dpi ->
-                Button(
-                    onClick = {
-                        runSilentCommand("wm density $dpi")
-                        triggerFailsafe()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = themeConfig.cardBgColor),
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 4.dp)
-                ) {
-                    Text(dpi, color = themeConfig.primaryColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text("2000x5000 (Density 400)", color = themeConfig.highlightColor.copy(alpha = 0.7f), fontSize = 9.sp)
                 }
             }
         }
